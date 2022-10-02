@@ -9,7 +9,7 @@ def run_nn():
     num_agents = 5
     models = [CNNLSTM(4) for _ in range(num_agents)]
 
-    env = gym.make('gym_examples/GridWorld-v0', render_mode='human', size=75, num_agents=num_agents, num_targets=30)
+    env = gym.make('gym_examples/GridWorld-v0', render_mode='human', size=75, num_agents=num_agents, num_targets=70)
     observation, info = env.reset()
 
     criterion = torch.nn.CrossEntropyLoss()  # mean-squared error for regression
