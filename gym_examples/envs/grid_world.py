@@ -9,7 +9,7 @@ class GridWorldEnv(gym.Env):
 
     def __init__(self, render_mode=None, size=5, num_agents=1, num_targets=1, agent_observation_radius=7):
         self.size = size  # The size of the square grid
-        self.window_size = 1024  # The size of the PyGame window
+        self.window_size = 512  # The size of the PyGame window
         self.num_targets = num_targets
 
         # Observations are dictionaries with the agent's and the target's location.
@@ -40,7 +40,8 @@ class GridWorldEnv(gym.Env):
             3: np.array([0, -1]),
         }
         self.num_agents = num_agents
-        self._agent_locations = [self.np_random.integers(0, self.size, size=2, dtype=int) for _ in range(self.num_agents)]
+        self._agent_locations = [self.np_random.integers(0, self.size, size=2, dtype=int) for _ in range(
+            self.num_agents)]
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
@@ -56,11 +57,28 @@ class GridWorldEnv(gym.Env):
         self.clock = None
 
     def _get_agent_obs(self, agent_location, agent_observation_radius):
-        obs = np.zeros((2 * agent_observation_radius + 1, 2 * agent_observation_radius + 1), dtype=int)
+        obs = np.zeros((2 * agent_observation_radius + 1, 2 * agent_observation_radius + 1), dtype=float)
         for i in range(-agent_observation_radius, agent_observation_radius + 1):
             for j in range(-agent_observation_radius, agent_observation_radius + 1):
                 if str(agent_location[0] + i) + "," + str(agent_location[1] + j) in self._target_locations_map:
                     obs[i + agent_observation_radius, j + agent_observation_radius] = 1
+        # mark all of the out of bounds values with -1
+        # where out of bounds is values less than 0 or greater than size - 1
+        # this is so that the agent can tell if it is at the edge of the grid
+        # edge of world is x distance from agent to left
+        edge_left = agent_location[0]
+        edge_right = self.size - agent_location[0] - 1
+        edge_top = agent_location[1]
+        edge_bottom = self.size - agent_location[1] - 1
+        # mark left
+        obs[0:agent_observation_radius - edge_left, :] = -1
+        # mark right
+        obs[agent_observation_radius + edge_right + 1:, :] = -1
+        # mark top
+        obs[:, 0:agent_observation_radius - edge_top] = -1
+        # mark bottom
+        obs[:, agent_observation_radius + edge_bottom + 1:] = -1
+
         return obs
 
     def _get_obs(self):
